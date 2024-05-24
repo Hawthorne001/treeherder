@@ -18,7 +18,7 @@
     "@fortawesome/react-fontawesome": "0.1.19",
     "@mozilla/glean": "5.0.0",
     "@types/prop-types": "*",
-    "@types/react": "*",
+    "@types/react": "16.14.60",
     "@types/react-dom": "*",
     "ajv": "8.6.3",
     "assert": "2.0.0",
