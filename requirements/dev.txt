@@ -499,7 +499,7 @@ typing-extensions==4.9.0 \
     #   asgiref
     #   black
     #   selenium
-urllib3[socks]==2.0.3 \
+urllib3==2.2.2 \
     --hash=sha256:48e7fafa40319d358848e1bc6809b208340fafe2096f1725d05d67443d0483d1 \
     --hash=sha256:bee28b5e56addb8226c96f7f13ac28cb4c301dd5ea8a6ca179c0b9835e032825
     # via
