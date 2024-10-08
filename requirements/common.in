@@ -1,18 +1,18 @@
 # Packages that are shared between deployment and dev environments.
 gunicorn==22.0.0
 whitenoise[brotli]==6.6.0  # Used by Whitenoise to provide Brotli-compressed versions of static files.
-Django==4.1.13
+Django==4.2.16
 celery==5.4.0  # celery needed for data ingestion
 cached-property==1.5.2 # needed for kombu with --require-hashes
 simplejson==3.19.2  # import simplejson
 newrelic==9.9.0
-certifi==2024.2.2
+certifi==2024.7.4
 
 mysqlclient==2.2.4   # Required by Django
 psycopg2-binary==2.9.9
 
 jsonschema==4.22.0  # import jsonschema
-djangorestframework==3.14.0  # Imported as rest_framework
+djangorestframework==3.15.2  # Imported as rest_framework
 django-cors-headers==4.3.1  # Listed as 3rd party app on settings.py
 mozlog==8.0.0
 
