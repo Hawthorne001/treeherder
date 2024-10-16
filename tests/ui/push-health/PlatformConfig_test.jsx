@@ -18,14 +18,17 @@ const { jobs } = pushHealth;
 const testFailure = pushHealth.metrics.tests.details.needInvestigation[2];
 
 beforeEach(() => {
-  fetchMock.get('https://treestatus.mozilla-releng.net/trees/autoland', {
-    result: {
-      message_of_the_day: '',
-      reason: '',
-      status: 'open',
-      tree: 'autoland',
+  fetchMock.get(
+    'https://treestatus.prod.lando.prod.cloudops.mozgcp.net/trees/autoland',
+    {
+      result: {
+        message_of_the_day: '',
+        reason: '',
+        status: 'open',
+        tree: 'autoland',
+      },
     },
-  });
+  );
   setUrlParam('repo', repoName);
   fetchMock.get(getProjectUrl('/jobs/285857770/', repoName), fullJob);
   fetchMock.get(getProjectUrl('/jobs/285852303/', repoName), fullJob);
@@ -76,7 +79,9 @@ describe('PlatformConfig', () => {
   );
 
   test('should show the test name', async () => {
-    const { getByText } = render(testPlatformConfig(testFailure, jobs));
+    const { getByText } = render(testPlatformConfig(testFailure, jobs), {
+      legacyRoot: true,
+    });
 
     expect(
       await waitFor(() =>
@@ -88,13 +93,17 @@ describe('PlatformConfig', () => {
   });
 
   test('should not show details by default', async () => {
-    const { queryByTestId } = render(testPlatformConfig(testFailure, jobs));
+    const { queryByTestId } = render(testPlatformConfig(testFailure, jobs), {
+      legacyRoot: true,
+    });
 
     expect(queryByTestId('log-lines')).toBeNull();
   });
 
   test('should show bug suggestions when expander clicked', async () => {
-    const { getByText } = render(testPlatformConfig(testFailure, jobs));
+    const { getByText } = render(testPlatformConfig(testFailure, jobs), {
+      legacyRoot: true,
+    });
     const detailsButton = getByText('task');
 
     fireEvent.click(detailsButton);
@@ -107,7 +116,9 @@ describe('PlatformConfig', () => {
   });
 
   test('should show artifacts when tab clicked', async () => {
-    const { getByText } = render(testPlatformConfig(testFailure, jobs));
+    const { getByText } = render(testPlatformConfig(testFailure, jobs), {
+      legacyRoot: true,
+    });
     const detailsButton = getByText('task');
 
     fireEvent.click(detailsButton);

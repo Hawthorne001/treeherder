@@ -72,7 +72,9 @@ describe('FailureSummaryTab', () => {
   );
 
   test('failures should be visible', async () => {
-    const { findByText } = render(testFailureSummaryTab());
+    const { findByText } = render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
 
     expect(
       await findByText(
@@ -82,7 +84,9 @@ describe('FailureSummaryTab', () => {
   });
 
   test('suggested duplicate bugs should mention open bug', async () => {
-    const { findByText } = render(testFailureSummaryTab());
+    const { findByText } = render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
 
     await waitFor(() => screen.getAllByText('Show more bug suggestions'));
     fireEvent.click(screen.getAllByText('Show more bug suggestions')[1]);
@@ -93,7 +97,9 @@ describe('FailureSummaryTab', () => {
   });
 
   test('suggested non-duplicate bugs should not mention other bug like duplicates do', async () => {
-    const { findByText } = render(testFailureSummaryTab());
+    const { findByText } = render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
 
     await waitFor(() => screen.getAllByText('Show more bug suggestions'));
     fireEvent.click(screen.getAllByText('Show more bug suggestions')[1]);
@@ -104,7 +110,9 @@ describe('FailureSummaryTab', () => {
   });
 
   test('classification with match to duplicate bug should put open bug into pinboard', async () => {
-    const { findByText } = render(testFailureSummaryTab());
+    const { findByText } = render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
 
     await waitFor(() => screen.getAllByText('Show more bug suggestions'));
     fireEvent.click(screen.getAllByText('Show more bug suggestions')[1]);
@@ -115,5 +123,39 @@ describe('FailureSummaryTab', () => {
     expect(screen.getByTestId('pinboard-bug-1725749').textContent).toBe(
       '1725749',
     );
+  });
+
+  test('filter by test path contains folder path (one level depth)', async () => {
+    /* For web platform tests, the test manifest does not necessarily only
+       contain one test folder but can contain subfolders.
+       Support for this has not been implemented and the whole test path is
+       supposed to be set as filter. */
+    render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
+
+    await waitFor(() =>
+      screen.getByTitle('Filter by test path: trusted-types/'),
+    );
+    expect(
+      screen.getByTitle('Filter by test path: trusted-types/'),
+    ).toBeInTheDocument();
+  });
+
+  test('filter by test path contains folder path (multiple level depth)', async () => {
+    /* For web platform tests, the test manifest does not necessarily only
+       contain one test folder but can contain subfolders.
+       Support for this has not been implemented and the whole test path is
+       supposed to be set as filter. */
+    render(testFailureSummaryTab(), {
+      legacyRoot: true,
+    });
+
+    await waitFor(() =>
+      screen.getByTitle('Filter by test path: css/css-break/'),
+    );
+    expect(
+      screen.getByTitle('Filter by test path: css/css-break/'),
+    ).toBeInTheDocument();
   });
 });

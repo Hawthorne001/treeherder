@@ -208,7 +208,6 @@ class PerformanceAlertSerializer(serializers.ModelSerializer):
         try:
             taskcluster_metadata = get_tc_metadata(alert, alert.summary.push)
             cache.set("tc_root_url", alert.summary.repository.tc_root_url, FIVE_DAYS)
-            cache.set("task_metadata", taskcluster_metadata, FIVE_DAYS)
             return taskcluster_metadata
         except ObjectDoesNotExist:
             return {}
@@ -222,10 +221,10 @@ class PerformanceAlertSerializer(serializers.ModelSerializer):
             return {}
 
     def get_profile_url(self, alert):
-        return "N/A"
+        return None
 
     def get_prev_profile_url(self, alert):
-        return "N/A"
+        return None
 
     def get_classifier_email(self, performance_alert):
         return getattr(performance_alert.classifier, "email", None)
@@ -476,6 +475,8 @@ class PerfCompareResultsQueryParamsSerializer(serializers.Serializer):
     framework = serializers.IntegerField(required=False, allow_null=True, default=None)
     interval = serializers.IntegerField(required=False, allow_null=True, default=None)
     no_subtests = serializers.BooleanField(required=False)
+    base_parent_signature = serializers.CharField(required=False, allow_null=True, default=None)
+    new_parent_signature = serializers.CharField(required=False, allow_null=True, default=None)
 
     def validate(self, data):
         if data["base_revision"] is None and data["interval"] is None:
@@ -503,7 +504,6 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
         max_length=10,
         default="",
     )
-    is_empty = serializers.BooleanField()
     is_complete = serializers.BooleanField()
     platform = serializers.CharField()
     header_name = serializers.CharField()
@@ -519,6 +519,14 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
         default=[],
     )
     new_runs = serializers.ListField(
+        child=PerfCompareDecimalField(),
+        default=[],
+    )
+    base_runs_replicates = serializers.ListField(
+        child=PerfCompareDecimalField(),
+        default=[],
+    )
+    new_runs_replicates = serializers.ListField(
         child=PerfCompareDecimalField(),
         default=[],
     )
@@ -544,6 +552,11 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
     is_improvement = serializers.BooleanField(required=False)
     is_regression = serializers.BooleanField(required=False)
     is_meaningful = serializers.BooleanField(required=False)
+    base_parent_signature = serializers.IntegerField()
+    new_parent_signature = serializers.IntegerField()
+    base_signature_id = serializers.IntegerField()
+    new_signature_id = serializers.IntegerField()
+    has_subtests = serializers.BooleanField()
 
     class Meta:
         model = PerformanceSignature
@@ -555,7 +568,6 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
             "framework_id",
             "platform",
             "suite",
-            "is_empty",
             "header_name",
             "base_repository_name",
             "new_repository_name",
@@ -566,6 +578,8 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
             "new_retriggerable_job_ids",
             "base_runs",
             "new_runs",
+            "base_runs_replicates",
+            "new_runs_replicates",
             "base_avg_value",
             "new_avg_value",
             "base_median_value",
@@ -591,6 +605,11 @@ class PerfCompareResultsSerializer(serializers.ModelSerializer):
             "is_improvement",
             "is_regression",
             "is_meaningful",
+            "base_parent_signature",
+            "new_parent_signature",
+            "base_signature_id",
+            "new_signature_id",
+            "has_subtests",
         ]
 
 

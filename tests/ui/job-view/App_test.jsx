@@ -32,14 +32,17 @@ describe('App', () => {
 
   beforeAll(() => {
     // tests will pass without this, but a lot of console warnings/errors
-    fetchMock.get('begin:https://treestatus.mozilla-releng.net/trees/', {
-      result: {
-        message_of_the_day: '',
-        reason: '',
-        status: 'open',
-        tree: repoName,
+    fetchMock.get(
+      'begin:https://treestatus.prod.lando.prod.cloudops.mozgcp.net/trees/',
+      {
+        result: {
+          message_of_the_day: '',
+          reason: '',
+          status: 'open',
+          tree: repoName,
+        },
       },
-    });
+    );
 
     fetchMock.get(getApiUrl('/repository/'), reposFixture);
     fetchMock.get(getApiUrl('/performance/framework/'), {});
@@ -135,7 +138,7 @@ describe('App', () => {
   });
 
   test('should have links to Perfherder and Intermittent Failures View', async () => {
-    const { getByText, getByAltText } = render(testApp());
+    const { getByText, getByAltText } = render(testApp(), { legacyRoot: true });
     const appMenu = await waitFor(() => getByAltText('Treeherder'));
 
     expect(appMenu).toBeInTheDocument();
@@ -157,7 +160,9 @@ describe('App', () => {
     secondJobSymbol,
     secondJobTaskId,
   ) => {
-    const { getByText, findByText, findByTestId } = render(testApp());
+    const { getByText, findByText, findByTestId } = render(testApp(), {
+      legacyRoot: true,
+    });
     const firstJob = await findByText(firstJobSymbol);
 
     fireEvent.mouseDown(firstJob);
@@ -225,7 +230,7 @@ describe('App', () => {
   });
 
   test('changing repo updates ``currentRepo``', async () => {
-    const { getByText, getByTitle } = render(testApp());
+    const { getByText, getByTitle } = render(testApp(), { legacyRoot: true });
 
     const autolandRevision = await waitFor(() => getByText('ba9c692786e9'));
     expect(autolandRevision).toBeInTheDocument();

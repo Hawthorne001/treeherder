@@ -15,7 +15,14 @@ import {
 } from '../perf-helpers/constants';
 import ErrorBoundary from '../../shared/ErrorBoundary';
 import { getData } from '../../helpers/http';
-import { createApiUrl, createQueryParams } from '../../helpers/url';
+import {
+  createApiUrl,
+  createQueryParams,
+  getPerfCompareBaseURL,
+  getPerfCompareOvertimeURL,
+  getPerfCompareBaseSubtestsURL,
+  getPerfCompareOvertimeSubtestsURL,
+} from '../../helpers/url';
 import {
   getFrameworkData,
   scrollWithOffset,
@@ -216,6 +223,8 @@ export default class CompareTableView extends React.Component {
       originalResultSet,
       newResultSet,
       pageTitle,
+      originalSignature,
+      newSignature,
     } = this.props.validated;
 
     const { filterByFramework, hasSubtests, frameworks, projects } = this.props;
@@ -266,6 +275,47 @@ export default class CompareTableView extends React.Component {
       });
     }
 
+    let perfCompareURL;
+    if (originalRevision) {
+      // compare with base url
+      perfCompareURL = hasSubtests
+        ? getPerfCompareBaseSubtestsURL(
+            originalProject,
+            originalRevision,
+            newProject,
+            newRevision,
+            framework.id,
+            originalSignature,
+            newSignature,
+          )
+        : getPerfCompareBaseURL(
+            originalProject,
+            originalRevision,
+            newProject,
+            newRevision,
+            framework.id,
+          );
+    } else if (timeRange) {
+      // compareOverTime URL
+      perfCompareURL = hasSubtests
+        ? getPerfCompareOvertimeSubtestsURL(
+            originalProject,
+            newProject,
+            newRevision,
+            framework.id,
+            timeRange.value,
+            originalSignature,
+            newSignature,
+          )
+        : getPerfCompareOvertimeURL(
+            originalProject,
+            newProject,
+            newRevision,
+            framework.id,
+            timeRange.value,
+          );
+    }
+
     return (
       <Container fluid className="max-width-default">
         {loading && !failureMessages.length && <LoadingSpinner />}
@@ -274,6 +324,20 @@ export default class CompareTableView extends React.Component {
           message={genericErrorMessage}
         >
           <React.Fragment>
+            <Row className="justify-content-center">
+              <Alert color="info">
+                Try out the same comparison{' '}
+                <a
+                  href={perfCompareURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  with our new PerfCompare tool
+                </a>
+                !
+              </Alert>
+            </Row>
+
             {hasSubtests && (
               <Link
                 to={{

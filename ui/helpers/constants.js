@@ -4,41 +4,21 @@ import closedTreeFavicon from '../img/tree_closed.png';
 export const thHosts = {
   production: {
     host: 'treeherder.mozilla.org',
-    treestatus: {
-      uiUrl: 'https://treestatus.mozilla-releng.net/static/ui/treestatus/',
-      apiUrl: 'https://treestatus.mozilla-releng.net/',
-    },
   },
   stage: {
     host: 'treeherder.allizom.org',
-    treestatus: {
-      uiUrl: 'https://ui.dev.lando.nonprod.cloudops.mozgcp.net/treestatus/',
-      apiUrl: 'https://treestatus.dev.lando.nonprod.cloudops.mozgcp.net/',
-    },
   },
   prototype: {
     host: 'prototype.treeherder.nonprod.cloudops.mozgcp.net',
-    treestatus: {
-      uiUrl: 'https://ui.dev.lando.nonprod.cloudops.mozgcp.net/treestatus/',
-      apiUrl: 'https://treestatus.dev.lando.nonprod.cloudops.mozgcp.net/',
-    },
   },
   localhost: {
     host: 'localhost',
-    treestatus: {
-      uiUrl: 'https://ui.dev.lando.nonprod.cloudops.mozgcp.net/treestatus/',
-      apiUrl: 'https://treestatus.dev.lando.nonprod.cloudops.mozgcp.net/',
-    },
   },
   default: {
     host: null,
     treestatus: {
-      uiUrl: 'https://treestatus.mozilla-releng.net/static/ui/treestatus/',
-      apiUrl: 'https://treestatus.mozilla-releng.net/',
-      /*
-      uiUrl: 'https://ui.dev.lando.nonprod.cloudops.mozgcp.net/treestatus/',
-      apiUrl: 'https://treestatus.dev.lando.nonprod.cloudops.mozgcp.net/',
-      */
+      uiUrl: 'https://lando.services.mozilla.com/treestatus/',
+      apiUrl: 'https://treestatus.prod.lando.prod.cloudops.mozgcp.net/',
     },
   },
 };
@@ -64,6 +44,7 @@ export const thPlatformMap = {
   'linux64-ccov': 'Linux x64 CCov',
   'linux64-noopt': 'Linux x64 NoOpt',
   'linux64-aarch64': 'Linux AArch64',
+  'linux64-aarch64-shippable': 'Linux AArch64 Shippable',
   'linux1804-64': 'Linux 18.04 x64',
   'linux1804-64-qr': 'Linux 18.04 x64 WebRender',
   'linux1804-64-shippable': 'Linux 18.04 x64 Shippable',
@@ -88,10 +69,6 @@ export const thPlatformMap = {
   'osx-cross-aarch64-add-on-devel': 'OS X AArch64 Cross Compiled addon',
   'osx-cross-ccov': 'OS X Cross Compiled CCov',
   'osx-cross-devedition': 'OS X Cross Compiled DevEdition',
-  'macosx1014-64': 'OS X 10.14',
-  'osx-1014-64': 'OS X 10.14',
-  'macosx1014-64-qr': 'OS X 10.14 WebRender',
-  'macosx1014-64-shippable': 'OS X 10.14 Shippable',
   'macosx1015-64': 'OS X 10.15',
   'macosx1015-64-qr': 'OS X 10.15 WebRender',
   'macosx1015-64-shippable': 'OS X 10.15 Shippable',
@@ -99,7 +76,10 @@ export const thPlatformMap = {
   'macosx1015-64-devedition-qr': 'OS X 10.15 WebRender DevEdition',
   'macosx1100-64-qr': 'OS X 11 WebRender',
   'macosx1100-64-shippable-qr': 'OS X 11 WebRender Shippable',
-  'macosx1100-64-aarch64-qr': 'OS X 11 AArch64 WebRender Shippable',
+  'macosx1100-64-aarch64-qr': 'OS X 11 AArch64 WebRender',
+  'macosx1100-64-aarch64-shippable-qr': 'OS X 11 AArch64 WebRender Shippable',
+  'macosx1100-aarch64-qr': 'OS X 11 AArch64 WebRender',
+  'macosx1100-aarch64-shippable-qr': 'OS X 11 AArch64 WebRender Shippable',
   'macosx1300-64-shippable-qr': 'macOS 13 x64 Shippable WebRender',
   macosx64: 'OS X',
   osx: 'OS X',
@@ -127,17 +107,10 @@ export const thPlatformMap = {
   'windows10-64-shippable': 'Windows 10 x64 Shippable',
   'windows10-64-shippable-qr': 'Windows 10 x64 WebRender Shippable',
   'windows10-64-qr': 'Windows 10 x64 WebRender',
-  'windows10-64-ref-hw-2017-qr': 'Windows 10 x64 WebRender 2017 Ref HW',
-  'windows10-aarch64-qr': 'Windows 10 AArch64 WebRender',
-  'windows10-64-2004-ccov-qr': 'Windows 10 x64 2004 CCov WebRender',
-  'windows10-64-2004-qr': 'Windows 10 x64 2004 WebRender',
   'windows10-64-2009-shippable-qr': 'Windows 10 x64 2009 Shippable WebRender',
   'windows10-64-2009-qr': 'Windows 10 x64 2009 WebRender',
-  'windows10-64-2004-asan-qr': 'Windows 10 x64 2004 asan WebRender',
-  'windows10-64-2004-shippable-qr': 'Windows 10 x64 2004 WebRender Shippable',
-  'windows10-64-2004-devedition-qr': 'Windows 10 x64 2004 WebRender DevEdition',
-  'windows10-64-2004-mingwclang-qr': 'Windows 10 x64 2004 MinGW WebRender',
   'windows11-64': 'Windows 11 x64',
+  'windows11-64-shippable-qr': 'Windows 11 x64 WebRender Shippable',
   'windows11-64-2009-qr': 'Windows 11 x64 22H2 WebRender',
   'windows11-64-2009-asan-qr': 'Windows 11 x64 22H2 asan WebRender',
   'windows11-64-2009-shippable-qr': 'Windows 11 x64 22H2 WebRender Shippable',
@@ -169,6 +142,8 @@ export const thPlatformMap = {
   'win64-nightlyasrelease': 'Windows x64 NightlyAsRelease WebRender',
   'windows10-64-nightlyasrelease-qr':
     'Windows 10 x64 NightlyAsRelease WebRender',
+  'windows11-64-nightlyasrelease-qr':
+    'Windows 11 x64 NightlyAsRelease WebRender',
   'android-4-1-armv7': 'Android 4.1 ARMv7',
   'android-4-1-x86': 'Android 4.1 x86',
   'android-4-1-x86-shippable-lite': 'Android 4.1 x86 Lite Shippable',
@@ -196,25 +171,35 @@ export const thPlatformMap = {
     'Android 7.0 x86-64 Lite WebRender Shippable',
   'android-em-7-0-x86_64-shippable-qr':
     'Android 7.0 x86-64 Shippable WebRender',
-  'android-hw-p2-8-0-arm7': 'Android 8.0 Pixel2',
-  'android-hw-p2-8-0-arm7-shippable-qr':
-    'Android 8.0 Pixel2 WebRender Shippable',
-  'android-hw-p2-8-0-android-aarch64-qr':
-    'Android 8.0 Pixel2 AArch64 WebRender',
-  'android-hw-p2-8-0-android-aarch64-shippable-qr':
-    'Android 8.0 Pixel2 AArch64 Shippable WebRender',
-  'android-hw-a51-11-0-arm7-qr': 'Android 11.0 Samsung A51 Arm7',
-  'android-hw-a51-11-0-aarch64-qr': 'Android 11.0 Samsung A51 AArch64',
+  'android-hw-a51-11-0-aarch64-qr': 'Android 11.0 Galaxy A51 AArch64',
   'android-hw-a51-11-0-aarch64-shippable-qr':
-    'Android 11.0 Samsung A51 AArch64 Shippable',
-  'android-hw-a51-11-0-arm7': 'Android 11.0 Samsung A51 Arm7',
+    'Android 11.0 Galaxy A51 AArch64 Shippable',
+  'android-hw-a51-11-0-aarch64-shippable':
+    'Android 11.0 Galaxy A51 AArch64 Shippable',
+  'android-hw-a51-11-0-arm7-qr': 'Android 11.0 Galaxy A51 ARMv7',
+  'android-hw-a51-11-0-arm7': 'Android 11.0 Galaxy A51 ARMv7',
   'android-hw-p5-13-0-android-aarch64-shippable-qr':
     'Android 13.0 Pixel5 AArch64 Shippable',
   'android-hw-p5-13-0-android-aarch64-qr': 'Android 13.0 Pixel5 AArch64',
-  'android-hw-p5-13-0-arm7-shippable-qr': 'Android 13.0 Pixel5 Arm7 Shippable',
-  'android-hw-p5-13-0-arm7-qr': 'Android 13.0 Pixel5 Arm7',
-  'android-hw-p5-13-0-arm7': 'Android 13.0 Pixel5 Arm7',
+  'android-hw-p5-13-0-arm7-shippable-qr': 'Android 13.0 Pixel5 ARMv7 Shippable',
+  'android-hw-p5-13-0-arm7-qr': 'Android 13.0 Pixel5 ARMv7',
+  'android-hw-p5-13-0-arm7': 'Android 13.0 Pixel5 ARMv7',
+  'android-hw-p6-13-0-android-aarch64-shippable-qr':
+    'Android 13.0 Pixel6 AArch64 Shippable',
+  'android-hw-a55-14-0-aarch64-shippable':
+    'Android 14.0 Galaxy A55 AArch64 Shippable',
+  'android-hw-a55-14-0-android-aarch64-shippable-qr':
+    'Android 14.0 Galaxy A55 AArch64 Shippable',
+  'android-hw-s24-14-0-android-aarch64-shippable-qr':
+    'Android 14.0 Galaxy S24 AArch64 Shippable',
   Android: 'Android',
+  'AC-android-all': 'Android Components',
+  'AC-ui-test': 'Android Components UI Tests',
+  'fenix-android-all': 'Fenix',
+  'fenix-ui-test': 'Fenix UI Tests',
+  'focus-android-all': 'Focus Android',
+  'focus-ui-test': 'Focus Android UI Tests',
+  ios: 'iOS',
 
   'gecko-decision': 'Gecko Decision Task',
   'firefox-release': 'Firefox Release Tasks',

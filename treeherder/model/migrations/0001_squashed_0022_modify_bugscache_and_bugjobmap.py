@@ -6,72 +6,6 @@ from django.conf import settings
 from django.db import migrations, models
 
 
-if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
-    EXTRA_MIGRATIONS = [
-        # Manually created migrations.
-        # Since Django doesn't natively support creating FULLTEXT indices.
-        migrations.RunSQL(
-            [
-                # Suppress the MySQL warning "InnoDB rebuilding table to add column FTS_DOC_ID":
-                # https://dev.mysql.com/doc/refman/5.7/en/innodb-fulltext-index.html#innodb-fulltext-index-docid
-                # The table is empty when the index is added, so we don't care about it being rebuilt,
-                # and there isn't a better way to add the index without Django FULLTEXT support.
-                'SET @old_max_error_count=@@max_error_count, max_error_count=0;',
-                'CREATE FULLTEXT INDEX idx_summary ON bugscache (summary);',
-                'SET max_error_count=@old_max_error_count;',
-            ],
-            reverse_sql=['ALTER TABLE bugscache DROP INDEX idx_summary;'],
-            state_operations=[
-                migrations.AddIndex(
-                    model_name='bugscache',
-                    index=models.Index(fields=['summary'], name='bugscache_summary_7f6b96_idx'),
-                )
-            ],
-        ),
-        # Since Django doesn't natively support creating composite prefix indicies for Mysql
-        migrations.RunSQL(
-            [
-                'CREATE INDEX failure_line_test_idx ON failure_line (test(50), subtest(25), status, expected, created);',
-                'CREATE INDEX failure_line_signature_test_idx ON failure_line (signature(25), test(50), created);',
-            ],
-            reverse_sql=[
-                'DROP INDEX failure_line_test_idx ON failure_line;',
-                'DROP INDEX failure_line_signature_test_idx ON failure_line;',
-            ],
-            state_operations=[
-                migrations.AlterIndexTogether(
-                    name='failureline',
-                    index_together=set(
-                        [
-                            ('test', 'subtest', 'status', 'expected', 'created'),
-                            ('job_guid', 'repository'),
-                            ('signature', 'test', 'created'),
-                        ]
-                    ),
-                ),
-            ],
-        ),
-    ]
-else:
-    # On postgres we can use standard migrations
-    EXTRA_MIGRATIONS = [
-        migrations.AlterIndexTogether(
-            name='failureline',
-            index_together=set(
-                [
-                    ('test', 'subtest', 'status', 'expected', 'created'),
-                    ('job_guid', 'repository'),
-                    ('signature', 'test', 'created'),
-                ]
-            ),
-        ),
-        migrations.AddIndex(
-            model_name='bugscache',
-            index=models.Index(fields=['summary'], name='bugscache_summary_7f6b96_idx'),
-        ),
-    ]
-
-
 class Migration(migrations.Migration):
     initial = True
 
@@ -991,23 +925,52 @@ class Migration(migrations.Migration):
             name='jobdetail',
             unique_together=set([('title', 'value', 'job')]),
         ),
-        migrations.AlterIndexTogether(
-            name='job',
-            index_together=set(
-                [
-                    ('repository', 'option_collection_hash', 'job_type', 'start_time'),
-                    ('repository', 'build_platform', 'job_type', 'start_time'),
-                    ('repository', 'submit_time'),
-                    ('machine_platform', 'option_collection_hash', 'push'),
-                    (
-                        'repository',
-                        'build_platform',
-                        'option_collection_hash',
-                        'job_type',
-                        'start_time',
-                    ),
-                    ('repository', 'job_type', 'start_time'),
-                ]
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=['repository', 'option_collection_hash', 'job_type', 'start_time'],
+                name='job_reposit_63c897_idx',
+            ),
+        ),
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=['repository', 'build_platform', 'job_type', 'start_time'],
+                name='job_reposit_fc1f71_idx',
+            ),
+        ),
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=['repository', 'submit_time'],
+                name='job_reposit_2101af_idx',
+            ),
+        ),
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=['machine_platform', 'option_collection_hash', 'push'],
+                name='job_machine_92bdd4_idx',
+            ),
+        ),
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=[
+                    'repository',
+                    'build_platform',
+                    'option_collection_hash',
+                    'job_type',
+                    'start_time',
+                ],
+                name='job_reposit_f4bb0f_idx'
+            )
+        ),
+        migrations.AddIndex(
+            model_name='job',
+            index=models.Index(
+                fields=['repository', 'job_type', 'start_time'],
+                name='job_reposit_f65dd6_idx',
             ),
         ),
         migrations.AlterUniqueTogether(
@@ -1018,10 +981,6 @@ class Migration(migrations.Migration):
             name='failureline',
             unique_together=set([('job_log', 'line')]),
         ),
-        migrations.AlterIndexTogether(
-            name='failureline',
-            index_together=set([('job_guid', 'repository')]),
-        ),
         migrations.AlterUniqueTogether(
             name='commit',
             unique_together=set([('push', 'revision')]),
@@ -1030,4 +989,15 @@ class Migration(migrations.Migration):
             name='bugjobmap',
             unique_together=set([('job', 'bug_id')]),
         ),
-    ] + EXTRA_MIGRATIONS
+        migrations.AddIndex(
+            model_name='failureline',
+            index=models.Index(
+                fields=['job_guid', 'repository'],
+                name='failure_lin_job_gui_b67c6d_idx',
+            ),
+        ),
+        migrations.AddIndex(
+            model_name='bugscache',
+            index=models.Index(fields=['summary'], name='bugscache_summary_7f6b96_idx'),
+        ),
+    ]

@@ -71,6 +71,7 @@ export default class SuggestionsListItem extends React.Component {
               bugClassName={
                 developerMode ? 'text-darker-secondary small-text' : ''
               }
+              title={bug.resolution !== '' ? bug.resolution : ''}
             />
           ))}
         </ul>,
@@ -130,7 +131,7 @@ export default class SuggestionsListItem extends React.Component {
         </mark>,
       );
     }
-    const filterTestPath = suggestion.search.match(/([a-z_\\-s0-9.]+[/])+/gi);
+    const filterTestPath = suggestion.search.match(/([a-z_\-0-9]+[/])+/gi);
 
     return (
       <li>

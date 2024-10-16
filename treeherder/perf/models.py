@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 import json
-from typing import Optional
 from functools import reduce
 
 from django.contrib.auth.models import User
@@ -204,12 +203,12 @@ class PerformanceDatum(models.Model):
 
     class Meta:
         db_table = "performance_datum"
-        index_together = [
+        indexes = [
             # Speeds up the typical "get a range of performance datums" query
-            ("repository", "signature", "push_timestamp"),
+            models.Index(fields=["repository", "signature", "push_timestamp"]),
             # Speeds up the compare view in treeherder (we only index on
             # repository because we currently filter on it in the query)
-            ("repository", "signature", "push"),
+            models.Index(fields=["repository", "signature", "push"]),
         ]
         unique_together = ("repository", "job", "push", "push_timestamp", "signature")
 
@@ -322,18 +321,30 @@ class PerformanceAlertSummary(models.Model):
         # allows updating timestamps only on new values
         self.__prev_bug_number = self.bug_number
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, update_fields=None, **kwargs):
         if self.bug_number is not None and self.bug_number != self.__prev_bug_number:
             self.bug_updated = datetime.now()
+
+            if update_fields is not None:
+                update_fields = {"bug_updated"}.union(update_fields)
+
         triage_due = calculate_time_to(self.created, TRIAGE_DAYS)
-        bug_due = calculate_time_to(self.created, BUG_DAYS)
         # created is initially PerformanceDatum.push_timestamp and due to a potential race condition
         # triage_due_date is not always calculated after the real created date
         if self.triage_due_date != triage_due:
             self.triage_due_date = triage_due
+
+            if update_fields is not None:
+                update_fields = {"triage_due_date"}.union(update_fields)
+
+        bug_due = calculate_time_to(self.created, BUG_DAYS)
         if self.bug_due_date != bug_due:
             self.bug_due_date = bug_due
-        super().save(*args, **kwargs)
+
+            if update_fields is not None:
+                update_fields = {"bug_due_date"}.union(update_fields)
+
+        super().save(*args, update_fields=update_fields, **kwargs)
         self.__prev_bug_number = self.bug_number
 
     def update_status(self, using=None):
@@ -509,7 +520,7 @@ class PerformanceAlert(models.Model):
     manually_created = models.BooleanField(default=False)
 
     @property
-    def initial_culprit_job(self) -> Optional[Job]:
+    def initial_culprit_job(self) -> Job | None:
         if hasattr(self, "__initial_culprit_job"):
             return self.__initial_culprit_job
 
@@ -708,7 +719,7 @@ class BackfillRecord(models.Model):
         return self.alert.series_signature.platform
 
     @property
-    def job_symbol(self) -> Optional[str]:
+    def job_symbol(self) -> str | None:
         if not all([self.job_tier, self.job_group, self.job_type]):
             return None
 
@@ -833,7 +844,7 @@ class PerformanceSettings(models.Model):
         db_table = "performance_settings"
 
 
-def deepgetattr(obj: object, attr_chain: str) -> Optional[object]:
+def deepgetattr(obj: object, attr_chain: str) -> object | None:
     """Recursively follow an attribute chain to get the final value.
 
     @param attr_chain: e.g. 'repository.name', 'job_type', 'record.platform.architecture' etc

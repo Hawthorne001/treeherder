@@ -37,6 +37,7 @@ def _update_bugscache(bug_list):
 
 BUG_SEARCHES = (
     ("test_popup_preventdefault_chrome.xul", [455091]),
+    ("test_Popup_Preventdefault_Chrome.XUL", [455091]),
     ("test_popup_preventdefault_chrome.xul foo bar", []),
     (
         "test_switch_frame.py TestSwitchFrame.test_should_be_able_to_carry_on_working_if_the_frame_is_deleted",
@@ -139,31 +140,6 @@ def test_bug_properties(transactional_db, sample_bugs):
 
     suggestions = Bugscache.search(search_term)
     assert set(suggestions["open_recent"][0].keys()) == expected_keys
-
-
-SEARCH_TERMS = (
-    ("(test_popup_preventdefault_chrome.xul+)", " test_popup_preventdefault_chrome.xul  "),
-    (
-        "TEST-UNEXPECTED-TIMEOUT | /webrtc/promises-call.html | Can set up a basic WebRTC call with only data using promises. - Test timed out",
-        "TEST UNEXPECTED TIMEOUT | /webrtc/promises call.html | Can set up a basic WebRTC call with only data using promises.   Test timed out",
-    ),
-    (
-        "*command timed out: 3600 seconds without output running~",
-        " command timed out: 3600 seconds without output running ",
-    ),
-    (
-        '"input password unmask.html#abc_def 0 7 7 7"',
-        " input password unmask.html#abc_def 0 7 7 7 ",
-    ),
-)
-
-
-def test_sanitized_search_term():
-    """Test that search terms are properly sanitized (this method is called in Bugscache.search before executing queries)."""
-
-    for case in SEARCH_TERMS:
-        sanitized_term = Bugscache.sanitized_search_term(case[0])
-        assert sanitized_term == case[1]
 
 
 @pytest.mark.django_db(transaction=True)

@@ -1,7 +1,6 @@
 import datetime
 import itertools
 import logging
-import re
 import time
 from hashlib import sha1
 
@@ -10,7 +9,6 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="newrelic")
 
 import newrelic.agent
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -234,57 +232,20 @@ class Bugscache(models.Model):
         return f"{self.id}"
 
     @classmethod
-    def sanitized_search_term(cls, search_term):
-        # MySQL Full Text Search operators, based on:
-        # https://dev.mysql.com/doc/refman/5.7/en/fulltext-boolean.html
-        # and other characters we want to remove
-        mysql_fts_operators_re = re.compile(r'[-+@<>()~*"\\]')
-
-        # Replace MySQL's Full Text Search Operators with spaces so searching
-        # for errors that have been pasted in still works.
-        return re.sub(mysql_fts_operators_re, " ", search_term)
-
-    @classmethod
     def search(cls, search_term):
         max_size = 50
+        search_term = search_term.lower()
 
-        if settings.DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
-            # Do not wrap a string in quotes to search as a phrase;
-            # see https://bugzilla.mozilla.org/show_bug.cgi?id=1704311
-            search_term_fulltext = cls.sanitized_search_term(search_term)
-
-            # Substitute escape and wildcard characters, so the search term is used
-            # literally in the LIKE statement.
-            search_term_like = (
-                search_term.replace("=", "==")
-                .replace("%", "=%")
-                .replace("_", "=_")
-                .replace('\\"', "")
-            )
-
-            recent_qs = cls.objects.raw(
-                """
-                SELECT id, summary, crash_signature, keywords, resolution, status, dupe_of,
-                 MATCH (`summary`) AGAINST (%s IN BOOLEAN MODE) AS relevance
-                  FROM bugscache
-                 WHERE 1
-                   AND `summary` LIKE CONCAT ('%%%%', %s, '%%%%') ESCAPE '='
-              ORDER BY relevance DESC
-                 LIMIT 0,%s
-                """,
-                [search_term_fulltext, search_term_like, max_size],
-            )
-        else:
-            # On PostgreSQL we can use the ORM directly, but NOT the full text search
-            # as the ranking algorithm expects english words, not paths
-            # So we use standard pattern matching AND trigram similarity to compare suite of characters
-            # instead of words
-            # Django already escapes special characters, so we do not need to handle that here
-            recent_qs = (
-                Bugscache.objects.filter(summary__icontains=search_term)
-                .annotate(similarity=TrigramSimilarity("summary", search_term))
-                .order_by("-similarity")[0:max_size]
-            )
+        # On PostgreSQL we can use the ORM directly, but NOT the full text search
+        # as the ranking algorithm expects english words, not paths
+        # So we use standard pattern matching AND trigram similarity to compare suite of characters
+        # instead of words
+        # Django already escapes special characters, so we do not need to handle that here
+        recent_qs = (
+            Bugscache.objects.filter(summary__icontains=search_term)
+            .annotate(similarity=TrigramSimilarity("summary", search_term))
+            .order_by("-similarity")[0:max_size]
+        )
 
         exclude_fields = ["modified", "processed_update"]
         try:
@@ -294,11 +255,11 @@ class Bugscache(models.Model):
             all_data = [
                 match
                 for match in open_recent_match_string
-                if match["summary"].startswith(search_term)
-                or "/" + search_term in match["summary"]
-                or " " + search_term in match["summary"]
-                or "\\" + search_term in match["summary"]
-                or "," + search_term in match["summary"]
+                if match["summary"].lower().startswith(search_term)
+                or "/" + search_term in match["summary"].lower()
+                or " " + search_term in match["summary"].lower()
+                or "\\" + search_term in match["summary"].lower()
+                or "," + search_term in match["summary"].lower()
             ]
             open_recent = [x for x in all_data if x["resolution"] == ""]
             all_others = [x for x in all_data if x["resolution"] != ""]
@@ -583,18 +544,26 @@ class Job(models.Model):
 
     class Meta:
         db_table = "job"
-        index_together = [
+        indexes = [
             # these speed up the various permutations of the "similar jobs"
             # queries
-            ("repository", "job_type", "start_time"),
-            ("repository", "build_platform", "job_type", "start_time"),
-            ("repository", "option_collection_hash", "job_type", "start_time"),
-            ("repository", "build_platform", "option_collection_hash", "job_type", "start_time"),
+            models.Index(fields=["repository", "job_type", "start_time"]),
+            models.Index(fields=["repository", "build_platform", "job_type", "start_time"]),
+            models.Index(fields=["repository", "option_collection_hash", "job_type", "start_time"]),
+            models.Index(
+                fields=[
+                    "repository",
+                    "build_platform",
+                    "option_collection_hash",
+                    "job_type",
+                    "start_time",
+                ]
+            ),
             # this is intended to speed up queries for specific platform /
             # option collections on a push
-            ("machine_platform", "option_collection_hash", "push"),
+            models.Index(fields=["machine_platform", "option_collection_hash", "push"]),
             # speed up cycle data
-            ("repository", "submit_time"),
+            models.Index(fields=["repository", "submit_time"]),
         ]
 
     @property
@@ -618,9 +587,13 @@ class Job(models.Model):
 
         return self.platform_option
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, update_fields=None, **kwargs):
         self.last_modified = datetime.datetime.now()
-        super().save(*args, **kwargs)
+
+        if update_fields is not None:
+            update_fields = {"last_modified"}.union(update_fields)
+
+        super().save(*args, update_fields=update_fields, **kwargs)
 
     def get_manual_classification_line(self):
         """
@@ -956,7 +929,7 @@ class FailureLine(models.Model):
 
     class Meta:
         db_table = "failure_line"
-        index_together = (("job_guid", "repository"),)
+        indexes = [models.Index(fields=["job_guid", "repository"])]
         unique_together = ("job_log", "line")
 
     def __str__(self):

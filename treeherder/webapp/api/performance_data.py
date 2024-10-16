@@ -5,7 +5,6 @@ from urllib.parse import urlencode
 
 import django_filters
 from django.conf import settings
-from django.core.cache import cache
 from django.db import transaction
 from django.db.models import CharField, Count, Q, Subquery, Value, Case, When
 from django.db.models.functions import Concat
@@ -483,19 +482,11 @@ class PerformanceAlertSummaryViewSet(viewsets.ModelViewSet):
                     if summary["id"] == int(pk):
                         for alert in summary["alerts"]:
                             if alert["is_regression"]:
-                                taskcluster_metadata = (
-                                    cache.get("task_metadata") if cache.get("task_metadata") else {}
-                                )
                                 alert["profile_url"] = get_profile_artifact_url(
-                                    alert, taskcluster_metadata
-                                )
-                                prev_taskcluster_metadata = (
-                                    cache.get("prev_task_metadata")
-                                    if cache.get("prev_task_metadata")
-                                    else {}
+                                    alert, metadata_key="taskcluster_metadata"
                                 )
                                 alert["prev_profile_url"] = get_profile_artifact_url(
-                                    alert, prev_taskcluster_metadata
+                                    alert, metadata_key="prev_taskcluster_metadata"
                                 )
             return self.get_paginated_response(serializer.data)
 
@@ -883,6 +874,8 @@ class PerfCompareResults(generics.ListAPIView):
         interval = query_params.validated_data["interval"]
         framework = query_params.validated_data["framework"]
         no_subtests = query_params.validated_data["no_subtests"]
+        base_parent_signature = query_params.validated_data["base_parent_signature"]
+        new_parent_signature = query_params.validated_data["new_parent_signature"]
 
         try:
             new_push = models.Push.objects.get(revision=new_rev, repository__name=new_repo_name)
@@ -915,8 +908,13 @@ class PerfCompareResults(generics.ListAPIView):
 
         push_timestamp = self._get_push_timestamp(base_push, new_push)
 
-        base_signatures = self._get_signatures(base_repo_name, framework, interval, no_subtests)
-        new_signatures = self._get_signatures(new_repo_name, framework, interval, no_subtests)
+        base_signatures = self._get_signatures(
+            base_repo_name, framework, base_parent_signature, interval, no_subtests
+        )
+
+        new_signatures = self._get_signatures(
+            new_repo_name, framework, new_parent_signature, interval, no_subtests
+        )
 
         base_perf_data = self._get_perf_data(
             base_repo_name, base_rev, base_signatures, interval, start_day, end_day
@@ -927,8 +925,16 @@ class PerfCompareResults(generics.ListAPIView):
 
         option_collection_map = perfcompare_utils.get_option_collection_map()
 
-        base_grouped_job_ids, base_grouped_values = self._get_grouped_perf_data(base_perf_data)
-        new_grouped_job_ids, new_grouped_values = self._get_grouped_perf_data(new_perf_data)
+        (
+            base_grouped_job_ids,
+            base_grouped_values,
+            base_grouped_replicates,
+        ) = self._get_grouped_perf_data(base_perf_data)
+        (
+            new_grouped_job_ids,
+            new_grouped_values,
+            new_grouped_replicates,
+        ) = self._get_grouped_perf_data(new_perf_data)
 
         base_signatures_map, base_header_names, base_platforms = self._get_signatures_map(
             base_signatures, base_grouped_values, option_collection_map
@@ -946,15 +952,31 @@ class PerfCompareResults(generics.ListAPIView):
             for platform in platforms:
                 sig_identifier = perfcompare_utils.get_sig_identifier(header, platform)
                 base_sig = base_signatures_map.get(sig_identifier, {})
-                base_sig_id = base_sig.get("id", "")
+                base_sig_id = base_sig.get("id", None)
                 new_sig = new_signatures_map.get(sig_identifier, {})
-                new_sig_id = new_sig.get("id", "")
-                lower_is_better = base_sig.get("lower_is_better", "")
-                is_empty = not (base_sig and new_sig)
-                if is_empty:
-                    continue
+                new_sig_id = new_sig.get("id", None)
+                if base_sig:
+                    (
+                        extra_options,
+                        lower_is_better,
+                        option_name,
+                        sig_hash,
+                        suite,
+                        test,
+                    ) = self._get_signature_based_properties(base_sig, option_collection_map)
+                else:
+                    (
+                        extra_options,
+                        lower_is_better,
+                        option_name,
+                        sig_hash,
+                        suite,
+                        test,
+                    ) = self._get_signature_based_properties(new_sig, option_collection_map)
                 base_perf_data_values = base_grouped_values.get(base_sig_id, [])
                 new_perf_data_values = new_grouped_values.get(new_sig_id, [])
+                base_perf_data_replicates = base_grouped_replicates.get(base_sig_id, [])
+                new_perf_data_replicates = new_grouped_replicates.get(new_sig_id, [])
                 base_runs_count = len(base_perf_data_values)
                 new_runs_count = len(new_perf_data_values)
                 is_complete = base_runs_count and new_runs_count
@@ -973,11 +995,6 @@ class PerfCompareResults(generics.ListAPIView):
                     base_perf_data_values, new_perf_data_values
                 )
                 confidence_text = perfcompare_utils.get_confidence_text(confidence)
-                sig_hash = (
-                    base_sig.get("signature_hash", "")
-                    if base_sig
-                    else new_sig.get("signature_hash", "")
-                )
                 delta_value = perfcompare_utils.get_delta_value(new_avg_value, base_avg_value)
                 delta_percentage = perfcompare_utils.get_delta_percentage(
                     delta_value, base_avg_value
@@ -1005,21 +1022,20 @@ class PerfCompareResults(generics.ListAPIView):
                     "platform": platform,
                     "base_app": base_sig.get("application", ""),
                     "new_app": new_sig.get("application", ""),
-                    "suite": base_sig.get("suite", ""),  # same suite for base_result and new_result
-                    "test": base_sig.get("test", ""),  # same test for base_result and new_result
+                    "suite": suite,  # same suite for base_result and new_result
+                    "test": test,  # same test for base_result and new_result
                     "is_complete": is_complete,
                     "framework_id": framework,
-                    "is_empty": is_empty,
-                    "option_name": option_collection_map.get(
-                        base_sig.get("option_collection_id", ""), ""
-                    ),
-                    "extra_options": base_sig.get("extra_options", ""),
+                    "option_name": option_name,
+                    "extra_options": extra_options,
                     "base_repository_name": base_repo_name,
                     "new_repository_name": new_repo_name,
                     "base_measurement_unit": base_sig.get("measurement_unit", ""),
                     "new_measurement_unit": new_sig.get("measurement_unit", ""),
                     "base_runs": sorted(base_perf_data_values),
                     "new_runs": sorted(new_perf_data_values),
+                    "base_runs_replicates": sorted(base_perf_data_replicates),
+                    "new_runs_replicates": sorted(new_perf_data_replicates),
                     "base_avg_value": base_avg_value,
                     "new_avg_value": new_avg_value,
                     "base_median_value": base_median_value,
@@ -1052,14 +1068,34 @@ class PerfCompareResults(generics.ListAPIView):
                     "is_improvement": is_improvement,
                     "is_regression": is_regression,
                     "is_meaningful": is_meaningful,
+                    "base_parent_signature": base_sig.get("parent_signature_id", None),
+                    "new_parent_signature": new_sig.get("parent_signature_id", None),
+                    "base_signature_id": base_sig_id,
+                    "new_signature_id": new_sig_id,
+                    "has_subtests": (
+                        base_sig.get("has_subtests", None) or new_sig.get("has_subtests", None)
+                    ),
                 }
-
                 self.queryset.append(row_result)
 
         serializer = self.get_serializer(self.queryset, many=True)
         serialized_data = serializer.data
 
         return Response(data=serialized_data)
+
+    def _get_signature_based_properties(self, sig, option_collection_map):
+        return (
+            sig.get("extra_options", ""),
+            sig.get("lower_is_better", ""),
+            self._get_option_name(sig, option_collection_map),
+            sig.get("signature_hash", ""),
+            sig.get("suite", ""),
+            sig.get("test", ""),
+        )
+
+    @staticmethod
+    def _get_option_name(sig, option_collection_map):
+        return option_collection_map.get(sig.get("option_collection_id", ""), "")
 
     @staticmethod
     def _get_push_timestamp(base_push, new_push):
@@ -1084,8 +1120,13 @@ class PerfCompareResults(generics.ListAPIView):
                     break
         return max(values)
 
-    def _get_perf_data(self, repository_name, revision, signatures, interval, startday, endday):
-        perf_data = self._get_perf_data_by_repo_and_signatures(repository_name, signatures)
+    @staticmethod
+    def _get_perf_data(repository_name, revision, signatures, interval, startday, endday):
+        signature_ids = [signature["id"] for signature in list(signatures)]
+        perf_data = PerformanceDatum.objects.select_related("push", "repository", "id").filter(
+            signature_id__in=signature_ids,
+            repository__name=repository_name,
+        )
         if revision:
             perf_data = perf_data.filter(push__revision=revision)
         elif interval and not startday and not endday:
@@ -1099,14 +1140,38 @@ class PerfCompareResults(generics.ListAPIView):
 
         return perf_data
 
-    def _get_signatures(self, repository_name, framework, interval, no_subtests):
-        signatures = self._get_filtered_signatures_by_repo(repository_name)
+    @staticmethod
+    def _get_signatures(repository_name, framework, parent_signature, interval, no_subtests):
+        signatures = PerformanceSignature.objects.select_related(
+            "framework", "repository", "platform", "push", "job"
+        ).filter(repository__name=repository_name)
         signatures = signatures.filter(parent_signature__isnull=no_subtests)
         if framework:
             signatures = signatures.filter(framework__id=framework)
+        if parent_signature:
+            signatures = signatures.filter(parent_signature_id=parent_signature)
         if interval:
-            signatures = self._get_filtered_signatures_by_interval(signatures, interval)
-        signatures = self._get_signatures_values(signatures)
+            signatures = signatures.filter(
+                last_updated__gte=datetime.datetime.utcfromtimestamp(
+                    int(time.time() - int(interval))
+                )
+            )
+        signatures = signatures.values(
+            "framework_id",
+            "id",
+            "lower_is_better",
+            "has_subtests",
+            "extra_options",
+            "suite",
+            "signature_hash",
+            "platform__platform",
+            "test",
+            "option_collection_id",
+            "parent_signature_id",
+            "repository_id",
+            "measurement_unit",
+            "application",
+        )
         return signatures
 
     @staticmethod
@@ -1164,53 +1229,23 @@ class PerfCompareResults(generics.ListAPIView):
         return new_time_range
 
     @staticmethod
-    def _get_perf_data_by_repo_and_signatures(repository_name, signatures):
-        signature_ids = [signature["id"] for signature in list(signatures)]
-        return PerformanceDatum.objects.select_related("push", "repository", "id").filter(
-            signature_id__in=signature_ids,
-            repository__name=repository_name,
-        )
-
-    @staticmethod
-    def _get_filtered_signatures_by_interval(signatures, interval):
-        return signatures.filter(
-            last_updated__gte=datetime.datetime.utcfromtimestamp(int(time.time() - int(interval)))
-        )
-
-    @staticmethod
-    def _get_signatures_values(signatures):
-        return signatures.values(
-            "framework_id",
-            "id",
-            "extra_options",
-            "suite",
-            "platform__platform",
-            "test",
-            "option_collection_id",
-            "repository_id",
-            "measurement_unit",
-            "lower_is_better",
-            "signature_hash",
-            "application",
-        )
-
-    @staticmethod
-    def _get_filtered_signatures_by_repo(repository_name):
-        return PerformanceSignature.objects.select_related(
-            "framework", "repository", "platform", "push", "job"
-        ).filter(repository__name=repository_name)
-
-    @staticmethod
     def _get_grouped_perf_data(perf_data):
+        grouped_replicate_values = defaultdict(list)
         grouped_values = defaultdict(list)
         grouped_job_ids = defaultdict(list)
         for signature_id, value, job_id in perf_data.values_list("signature_id", "value", "job_id"):
             if value is not None:
                 grouped_values[signature_id].append(value)
                 grouped_job_ids[signature_id].append(job_id)
-        return grouped_job_ids, grouped_values
+        for signature_id, replicate_value in perf_data.values_list(
+            "signature_id", "performancedatumreplicate__value"
+        ):
+            if replicate_value is not None:
+                grouped_replicate_values[signature_id].append(replicate_value)
+        return grouped_job_ids, grouped_values, grouped_replicate_values
 
-    def _get_signatures_map(self, signatures, grouped_values, option_collection_map):
+    @staticmethod
+    def _get_signatures_map(signatures, grouped_values, option_collection_map):
         """
         @return: signatures_map - contains a mapping of all the signatures for easy access and matching
                  header_names - list of header names for all given signatures
