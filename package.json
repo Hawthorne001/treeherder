@@ -19,7 +19,7 @@
     "@mui/material": "7.1.2",
     "@mui/styled-engine-sc": "npm:@mui/styled-engine-sc@latest",
     "@types/react": "*",
-    "@types/react-dom": "*",
+    "@types/react-dom": "19.1.6",
     "ajv": "8.17.1",
     "assert": "2.1.0",
     "auth0-js": "9.22.1",
