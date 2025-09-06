@@ -2897,13 +2897,13 @@ asynckit@^0.4.0:
   resolved "https://registry.yarnpkg.com/asynckit/-/asynckit-0.4.0.tgz#c79ed97f7f34cb8f2ba1bc9790bcc366474b4b79"
   integrity sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==
 
-auth0-js@9.22.1:
-  version "9.22.1"
-  resolved "https://registry.yarnpkg.com/auth0-js/-/auth0-js-9.22.1.tgz#8266f859f215199c70c4ef2988ab0bd63f67b3f4"
-  integrity sha512-AcyJiWhsyG5zdx40O9i/okpLLEvB23/6CivWynmGtP43s2C4GSq3E+XdCRw64ifmZ7t6ZK4Yzfpiqy5KVXEtJg==
+auth0-js@9.28.0:
+  version "9.28.0"
+  resolved "https://registry.yarnpkg.com/auth0-js/-/auth0-js-9.28.0.tgz#f9d3f0ddf865d4e34f1befb0eacfaa6785ca2f9e"
+  integrity sha512-2xIfQIGM0vX3IdPR91ztLO2+Ar2I5+3iFKcjuZO+LV9vRh4Wje+Ka1hnHjMU9dH892Lm3ZxBAHxRo68YToUhfg==
   dependencies:
     base64-js "^1.5.1"
-    idtoken-verifier "^2.2.2"
+    idtoken-verifier "^2.2.4"
     js-cookie "^2.2.0"
     minimist "^1.2.5"
     qs "^6.10.1"
@@ -5880,7 +5880,7 @@ icss-utils@^5.0.0, icss-utils@^5.1.0:
   resolved "https://registry.yarnpkg.com/icss-utils/-/icss-utils-5.1.0.tgz#c6be6858abd013d768e98366ae47e25d5887b1ae"
   integrity sha512-soFhflCVWLfRNOPU3iv5Z9VUdT44xFRbzjLsEzSr5AQmgqPMTHdU3PMT1Cf1ssx8fLNJDA1juftYl+PUcv3MqA==
 
-idtoken-verifier@^2.2.2:
+idtoken-verifier@^2.2.4:
   version "2.2.4"
   resolved "https://registry.yarnpkg.com/idtoken-verifier/-/idtoken-verifier-2.2.4.tgz#5749bd3fc9b757db40ad764484173584fb19fb55"
   integrity sha512-5t7O8cNHpJBB8FnwLD0qFZqy/+qGICObQKUl0njD6vXKHhpZPLEe8LU7qv/GBWB3Qv5e/wAIFHYVi4SoQwdOxQ==
