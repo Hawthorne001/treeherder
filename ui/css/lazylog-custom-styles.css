@@ -1,53 +1,56 @@
-.react-lazylog {
+/* Use higher specificity selectors to override react-lazylog's CSS module styles */
+/* The .treeherder-lazylog-wrapper class is on wrapper divs in logviewer/App.jsx and LogviewerTab.jsx */
+
+.treeherder-lazylog-wrapper .react-lazylog {
   font-family: monospace;
   background: #f8f8f8;
   color: #333;
   font-size: 12px;
 }
 
-.react-lazylog div:hover {
+.treeherder-lazylog-wrapper .react-lazylog div:hover {
   background: transparent;
 }
 
-.react-lazylog a:hover {
+.treeherder-lazylog-wrapper .react-lazylog a:hover {
   background: #f8eec7;
   color: #000;
 }
 
-.react-lazylog a {
+.treeherder-lazylog-wrapper .react-lazylog a {
   color: #b9b9b9;
   margin: 0;
 }
 
 /* Make crash viewer and profile links more visible than line numbers */
-.react-lazylog a.log-line-link {
+.treeherder-lazylog-wrapper .react-lazylog a.log-line-link {
   color: #0066cc;
   text-decoration: underline;
 }
 
-.react-lazylog .yellow-highlight {
+.treeherder-lazylog-wrapper .react-lazylog .yellow-highlight {
   background: #f8eec7;
   color: #000;
 }
 
-.react-lazylog-searchbar {
+.treeherder-lazylog-wrapper .react-lazylog-searchbar {
   background: #354048;
 }
 
-.react-lazylog-searchbar-input {
+.treeherder-lazylog-wrapper .react-lazylog-searchbar-input {
   background: white;
   color: black;
 }
 
-.react-lazylog-searchbar-input::placeholder {
+.treeherder-lazylog-wrapper .react-lazylog-searchbar-input::placeholder {
   color: black;
   opacity: 1;
 }
 
-.react-lazylog-searchbar-filter svg {
+.treeherder-lazylog-wrapper .react-lazylog-searchbar-filter svg {
   fill: white;
 }
 
-.react-lazylog-searchbar-matches {
+.treeherder-lazylog-wrapper .react-lazylog-searchbar-matches {
   color: white;
 }

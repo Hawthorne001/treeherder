@@ -452,7 +452,7 @@ class App extends React.PureComponent {
               />
             </div>
           )}
-          <div className="log-contents flex-fill">
+          <div className="log-contents flex-fill treeherder-lazylog-wrapper">
             {rawLogUrl && (
               <LazyLog
                 url={rawLogUrl}

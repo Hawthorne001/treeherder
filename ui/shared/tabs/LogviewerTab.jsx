@@ -49,7 +49,7 @@ class LogviewerTab extends React.PureComponent {
     );
 
     return (
-      <div className="h-100 w-100" aria-label="Log">
+      <div className="h-100 w-100 treeherder-lazylog-wrapper" aria-label="Log">
         <span className="log-viewer-top-bar-buttons">
           <a
             className="p-1 me-2 text-darker-secondary"
