@@ -790,3 +790,4 @@ zope-interface==6.1 \
 # satisfied by a package already installed. Consider using the --allow-unsafe flag.
 # pip
 # setuptools
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
