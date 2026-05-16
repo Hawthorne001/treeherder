@@ -2951,3 +2951,4 @@ zstandard==0.23.0 \
     --hash=sha256:f8346bfa098532bc1fb6c7ef06783e969d87a99dd1d2a5a18a892c1d7a643c58 \
     --hash=sha256:b2d8c62d08e7255f68f7a740bae85b3c9b8e5466baa9cbf7f57f1cde0ac6bc09
     # via mozci
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
