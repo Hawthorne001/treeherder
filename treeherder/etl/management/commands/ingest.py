@@ -420,7 +420,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "ingestion_type", nargs=1, help="Type of ingestion to do: [task|hg-push|git-commit|pr]"
+            "ingestion_type",
+            nargs=1,
+            help="Type of ingestion to do: [task|push|git-push|git-pushes|pr]",
         )
         parser.add_argument("-p", "--project", help="Hg repository to query (e.g. autoland)")
         parser.add_argument("-c", "--commit", "-r", "--revision", help="Commit/revision to import")
@@ -461,6 +463,12 @@ class Command(BaseCommand):
         loop = asyncio.get_event_loop()
         type_of_ingestion = options["ingestion_type"][0]
         root_url = options["root_url"]
+
+        # Use the verbosity option provided by Django to set log level
+        verbosity = options.get("verbosity", 2)  # Set default to INFO
+        levels = {0: logging.ERROR, 1: logging.WARNING, 2: logging.INFO, 3: logging.DEBUG}
+        log_level = levels.get(verbosity, logging.INFO)
+        logger.setLevel(level=log_level)
 
         if not options["enable_eager_celery"]:
             logger.info("If you want all logs to be parsed use --enable-eager-celery")
