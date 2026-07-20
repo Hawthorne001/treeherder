@@ -11,13 +11,24 @@ import AlertTable from './AlertTable';
 export default class AlertsViewControls extends React.Component {
   constructor(props) {
     super(props);
+    this.graphHighlightTimer = null;
     const { filters } = this.props;
 
     this.state = {
       disableHideDownstream: ['invalid', 'reassigned', 'downstream', 'infra'].includes(
         filters.status,
       ),
+      lastClickedGraphAlertId: null,
     };
+  }
+
+  componentDidMount() {
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    clearTimeout(this.graphHighlightTimer);
   }
 
   updateFilterText = (filterText) => {
@@ -54,6 +65,23 @@ export default class AlertsViewControls extends React.Component {
       (item) => item.name === selectedFramework,
     );
     setFiltersState({ framework });
+  };
+
+  setLastClickedGraphAlertId = (alertId) => {
+    this.setState({ lastClickedGraphAlertId: alertId });
+  };
+
+  // highlighted ID is set immediately, but the timer only starts
+  // clearing it on tab return, as long as it remains in focus
+  handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      clearTimeout(this.graphHighlightTimer);
+    } else if (this.state.lastClickedGraphAlertId != null) {
+      clearTimeout(this.graphHighlightTimer);
+      this.graphHighlightTimer = setTimeout(
+        () => this.setState({ lastClickedGraphAlertId: null }), 3000,
+      );
+    }
   };
 
   render() {
@@ -167,6 +195,8 @@ export default class AlertsViewControls extends React.Component {
                 }}
                 alertSummary={alertSummary}
                 fetchAlertSummaries={fetchAlertSummaries}
+                lastClickedGraphAlertId={this.state.lastClickedGraphAlertId}
+                setLastClickedGraphAlertId={this.setLastClickedGraphAlertId}
                 user={user}
                 {...this.props}
               />
