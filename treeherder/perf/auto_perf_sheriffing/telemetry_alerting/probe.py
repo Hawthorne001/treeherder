@@ -7,7 +7,9 @@ from treeherder.perf.auto_perf_sheriffing.telemetry_alerting.utils import (
     DEFAULT_ALERT_EMAIL,
     DEFAULT_BUGZILLA_INFO,
     DEFAULT_CHANGE_DETECTION,
+    DESKTOP,
     GLEAN_PROBE_INFO,
+    MOBILE,
 )
 
 logger = logging.getLogger(__name__)
@@ -63,6 +65,18 @@ class TelemetryProbe:
             if self._probe_info:
                 self._time_unit = self._probe_info.get("time_unit", "")
         return self._time_unit
+
+    @property
+    def platform(self):
+        return self.metric_info["platform"]
+
+    @property
+    def is_desktop(self):
+        return self.platform == DESKTOP
+
+    @property
+    def is_mobile(self):
+        return self.platform == MOBILE
 
     def get_change_detection_technique(self):
         return self.monitor_info.get("change_detection_technique", DEFAULT_CHANGE_DETECTION)
